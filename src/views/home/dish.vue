@@ -229,7 +229,7 @@ const token = ref("Bearer " + localStorage.getItem('userId') as string)
 onMounted(() => {
     let userId = localStorage.getItem('userId') as string
     if (!userId) {
-        router.push('/admin/login')
+        router.push('/login')
     }
     getList()
     DishType()

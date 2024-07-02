@@ -46,7 +46,7 @@
       </div>
       <div>
         <span>修改状态: &nbsp;</span>
-        <el-select v-model="statusValue" clearable placeholder="请选择">
+        <el-select style="width: 30%;" v-model="statusValue" clearable placeholder="请选择">
           <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </div>

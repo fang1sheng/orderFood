@@ -27,7 +27,7 @@ const goHome = async () => {
     if (res.status === 200) {
         localStorage.setItem('userId', res.data.data)
         ElMessage.success('登录成功')
-        router.push('/admin/home')
+        router.push('/home')
     }
 }
 </script>

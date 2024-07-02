@@ -23,19 +23,19 @@
                                     <ForkSpoon class="text-slate-100 mt-1" />
                                 </el-icon>
                                 订单管理</template>
-                            <el-menu-item index="1-4-1" @click="router.push('/admin/dish')">
+                            <el-menu-item index="1-4-1" @click="router.push('/dish')">
                                 <el-icon>
                                     <IceCreamRound class="text-slate-100" />
                                 </el-icon>
                                 菜品详情
                             </el-menu-item>
-                            <el-menu-item index="1-4-2" @click="router.push('/admin/order')">
+                            <el-menu-item index="1-4-2" @click="router.push('/order')">
                                 <el-icon>
                                     <IceCreamRound class="text-slate-100" />
                                 </el-icon>
                                 订单详情
                             </el-menu-item>
-                            <el-menu-item index="1-4-3" @click="router.push('/admin/dishType')">
+                            <el-menu-item index="1-4-3" @click="router.push('/dishType')">
                                 <el-icon>
                                     <IceCreamRound class="text-slate-100" />
                                 </el-icon>
@@ -59,7 +59,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const logout = () => {
     localStorage.removeItem('userId')
-    router.push('/admin/login')
+    router.push('/login')
 }
 </script>
 <style scoped lang='less'>
