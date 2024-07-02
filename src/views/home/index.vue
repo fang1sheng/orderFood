@@ -9,8 +9,8 @@
                     </el-icon>
                 </div>
                 <div class="flex items-center">
-                     <span class="text-slate-300 tracking-widest">admin 欢迎您！</span>
-                     <el-button type="primary" size="small" @click="logout">退出</el-button>
+                    <span class="text-slate-300 tracking-widest">admin 欢迎您！</span>
+                    <el-button type="primary" size="small" @click="logout">退出</el-button>
                 </div>
             </el-header>
             <el-container>
@@ -34,6 +34,12 @@
                                     <IceCreamRound class="text-slate-100" />
                                 </el-icon>
                                 订单详情
+                            </el-menu-item>
+                            <el-menu-item index="1-4-3" @click="router.push('/admin/dishType')">
+                                <el-icon>
+                                    <IceCreamRound class="text-slate-100" />
+                                </el-icon>
+                                菜品类型
                             </el-menu-item>
                         </el-sub-menu>
                     </el-menu>

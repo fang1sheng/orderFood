@@ -4,11 +4,13 @@
       <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
       <el-breadcrumb-item>订单详情</el-breadcrumb-item>
     </el-breadcrumb>
-    <div class="my-3"><span>筛选订单：</span> <el-select v-model="statusSelect" placeholder="请选择"
-        @change="getList(statusSelect)" clearable @clear="getList">
+    <div class="my-3 flex items-center">
+      <div class="min-w-fit">筛选订单：</div>
+      <el-select style="width: 10%;" v-model="statusSelect" placeholder="请选择" @change="getList(statusSelect)" clearable @clear="getList">
         <el-option v-for="item in handkv" :key="item.value" :label="item.text" :value="item.value" />
-      </el-select> </div>
-    <div class="min-h-[calc(100vh-130px)]">
+      </el-select>
+    </div>
+    <div>
       <el-table :data="tableData" border stripe>
         <el-table-column align="center" width="100" property="tableNumber" label="桌号" show-overflow-tooltip />
 
@@ -27,7 +29,7 @@
             <el-tag :type="statusMap.get(scope.row.status)">{{ scope.row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column align="center" :formatter="dataformat" width="150" label="创建时间"
+        <el-table-column align="center" :formatter="dataformat" width="180" label="创建时间"
           property="createTime"></el-table-column>
         <el-table-column align="center" label="操作" width="150">
           <template #default="scope">
@@ -82,8 +84,7 @@ const editId = ref<number | string>(0)
 const NewStatus = ref<string>('等待确认')
 const statusValue = ref('')
 const dataformat = (a: any, b: any, cellValue: any, d: any) => {
-  console.log(a, b, d);
-
+  console.log(a, b, d)
   return new Date(cellValue).toLocaleString()
 }
 const statusMap = new Map([['等待确认', 'warning'], ['订单完成', 'success'], ['等待出餐', 'danger']])
@@ -149,7 +150,6 @@ const editBtn = (row: OrderType) => {
   dialogVisible.value = true
   editId.value = row.id
   NewStatus.value = row.status as string
-
 }
 // 确认修改状态
 const handelerEdit = async () => {

@@ -1,4 +1,6 @@
 import axios from 'axios'
+import { useRouter } from "vue-router"
+const router = useRouter()
 const request = axios.create({
     baseURL: '/api',
     timeout: 5000,
@@ -12,7 +14,11 @@ request.interceptors.request.use(
         return config
     },
     error => {
-        return Promise.reject(error)
+        if (error.response && error.response.status === 401) {
+            router.push('/admin/login')
+        } else {
+            return Promise.reject(error);
+        }
     }
 )
 export default request

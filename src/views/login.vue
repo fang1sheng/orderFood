@@ -22,6 +22,8 @@ const loginForm = ref<UserType>({
 })
 const goHome = async () => {
     let res = await login(loginForm.value)
+    console.log(res);
+    
     if (res.status === 200) {
         localStorage.setItem('userId', res.data.data)
         ElMessage.success('登录成功')

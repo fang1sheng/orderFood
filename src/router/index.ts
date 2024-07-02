@@ -1,4 +1,4 @@
-import { createRouter, RouteRecordRaw,createWebHistory } from 'vue-router'
+import { createRouter, RouteRecordRaw, createWebHistory } from 'vue-router'
 const routes: Array<RouteRecordRaw> = [
     {
         path: '/admin/',
@@ -20,6 +20,10 @@ const routes: Array<RouteRecordRaw> = [
             {
                 path: '/admin/dish',
                 component: () => import('../views/home/dish.vue'),
+            },
+            {
+                path: '/admin/dishType',
+                component: () => import('../views/home/dishType.vue'),
             }
         ]
     }

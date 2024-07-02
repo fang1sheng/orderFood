@@ -6,13 +6,24 @@
             <el-breadcrumb-item>菜单详情</el-breadcrumb-item>
         </el-breadcrumb>
         <div class="min-h-[calc(100vh-130px)]">
-            <!-- 添加按钮 -->
-            <el-button type="primary" class="mb-3" @click="centerDialogVisible = true">添加菜品</el-button>
+            <div class="flex items-center gap-10 mb-3">
+                <!-- 添加按钮 -->
+                <el-button type="primary" @click="centerDialogVisible = true">添加菜品</el-button>
+                <div class="min-w-52 my-3 flex">
+                    <div class="min-w-fit">筛选菜单：</div>
+                    <el-select style="width: 100%;" v-model="statusSelect" placeholder="请选择" clearable @clear="getList"
+                        @change="selectHandler">
+                        <el-option v-for="item in dishTypeList" :key="item.id" :label="item.name" :value="item.name" />
+                    </el-select>
+                </div>
+            </div>
+
             <!-- 表格数据 -->
             <el-table :data="tableData" border stripe @selection-change="handleSelectionChange">
-                <el-table-column align="center" type="index" width="55" label="序号" />
+                <el-table-column align="center" type="index" width="60" label="#" />
                 <el-table-column align="center" property="name" label="菜单" />
-                <el-table-column align="center" property="price" label="价格" width="80" />
+                <el-table-column align="center" property="price" label="价格" />
+                <el-table-column align="center" property="dishTypeName" label="类型" />
                 <el-table-column align="center" property="" label="样品">
                     <template #default="scope">
                         <div class="flex justify-center items-center">
@@ -23,6 +34,7 @@
                 <el-table-column width="400" align="center" property="des" label="菜品简介" show-overflow-tooltip />
                 <el-table-column align="center" label="操作">
                     <template #default="scope">
+                        <el-button type="primary" size="small" @click="editBtn(scope.row)">编辑</el-button>
                         <el-button type="danger" size="small" @click="handleDelete(scope.row.id)">删除</el-button>
                     </template>
                 </el-table-column>
@@ -36,6 +48,12 @@
                 </el-form-item>
                 <el-form-item label="价格" prop="price">
                     <el-input v-model="ruleForm.price" placeholder="请输入价格" />
+                </el-form-item>
+                <el-form-item label="类型" prop="dishType">
+                    <el-checkbox-group v-model="ruleForm.dishType">
+                        <el-checkbox border v-for="item in dishTypeList " :key="item.id" :label="item.name"
+                            :value="item.priority" />
+                    </el-checkbox-group>
                 </el-form-item>
                 <el-form-item label="描述" prop="price">
                     <el-input v-model="ruleForm.des" type="textarea" />
@@ -70,6 +88,51 @@
         <el-dialog v-model="dialogVisible" title="图片预览" width="50%" center>
             <img class="w-1/2 translate-x-1/2" :src="dialogImageUrl" alt="Preview Image" />
         </el-dialog>
+        <!-- 修改菜品对话框 -->
+        <el-dialog @close="resetEditForm" v-model="editDialogVisible" title="修改菜品" width="30%" center>
+            <el-form ref="editRuleFormRef" :model="editRuleForm" :rules="rules" class="demo-ruleForm">
+                <el-form-item label="菜名" prop="name">
+                    <el-input v-model="editRuleForm.name" placeholder="请输入菜名" />
+                </el-form-item>
+                <el-form-item label="价格" prop="price">
+                    <el-input v-model="editRuleForm.price" placeholder="请输入价格" />
+                </el-form-item>
+                <el-form-item label="类型" prop="dishType">
+                    <el-checkbox-group v-model="editRuleForm.dishType">
+                        <el-checkbox border v-for="item in dishTypeList " :key="item.id" :label="item.name"
+                            :value="item.priority" />
+                    </el-checkbox-group>
+                </el-form-item>
+                <el-form-item label="描述" prop="price">
+                    <el-input v-model="editRuleForm.des" type="textarea" />
+                </el-form-item>
+                <el-form-item label="样品" label-width="50">
+                    <el-upload :disabled="isFull" :limit="1" :on-exceed="handleExceed"
+                        :on-success="editHandleAvatarSuccess" :headers="{ Authorization: token }" action="/api/upload"
+                        list-type="picture-card">
+                        <el-icon>
+                            <Plus />
+                        </el-icon>
+                        <template #file="{ file }">
+                            <div>
+                                <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
+                                <span class="el-upload-list__item-actions">
+                                    <span class="el-upload-list__item-preview" @click="handlePictureCardPreview(file)">
+                                        <el-icon><zoom-in /></el-icon>
+                                    </span>
+                                </span>
+                            </div>
+                        </template>
+                    </el-upload>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="editDialogVisible = false">取消</el-button>
+                    <el-button type="primary" @click="confirmEditDish">确认</el-button>
+                </span>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
@@ -78,7 +141,7 @@ import { ArrowRight, Plus, ZoomIn } from '@element-plus/icons-vue'
 import { ref, onMounted, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules, UploadProps, UploadFile } from 'element-plus'
-import { getDishList, addDish,delDish } from '../../api/request'
+import { getDishList, addDish, delDish, getDishType, editDish } from '../../api/request'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 interface DishType {
@@ -89,26 +152,46 @@ interface DishType {
     price: number
     status: number
     favour: number
+    dishTypeName: string
     id: string | number
 }
+interface OrderType {
+    "id": number,
+    "name": string,
+    "priority": number,
+    "des": null | string,
+    "deleted": number
+}
 interface RuleForm {
+    id: number
     name: string
     price: string | number
     des: string
     image: string
+    dishType: Array<string> | string
 }
 const centerDialogVisible = ref(false)
+const editDialogVisible = ref(false)
 const dialogVisible = ref(false)
 const isFull = ref(false)
+const statusSelect = ref<string>('')
 const dialogImageUrl = ref('')
+const dishTypeList = ref<OrderType[]>([])
 const multipleSelection = ref<DishType[]>([])
 const handleSelectionChange = (val: DishType[]) => {
     multipleSelection.value = val
 }
+const editRuleForm = ref({} as RuleForm)
 const handleAvatarSuccess: UploadProps['onSuccess'] = (response) => {
     if (response.status === 200) {
         ElMessage.success('上传成功')
         ruleForm.image = response.data
+    }
+}
+const editHandleAvatarSuccess: UploadProps['onSuccess'] = (response) => {
+    if (response.status === 200) {
+        ElMessage.success('上传成功')
+        editRuleForm.value.image = response.data
     }
 }
 const handleExceed: UploadProps['onExceed'] = (files) => {
@@ -121,18 +204,25 @@ const handlePictureCardPreview = (file: UploadFile) => {
 }
 const tableData = ref<Array<DishType>>([])
 const ruleFormRef = ref<FormInstance>()
+const editRuleFormRef = ref<FormInstance>()
 const ruleForm = reactive<RuleForm>({
+    id: 0,
     name: '',
     price: '',
     des: '',
     image: '',
+    dishType: []
 })
 const rules = reactive<FormRules<RuleForm>>({
     name: [
         { required: true, message: 'Please input Activity name', trigger: 'blur' },
     ],
     price: [
-        { required: true, message: 'Please input Activity name', trigger: 'blur' },
+        { required: true, message: 'Please input Activity price', trigger: 'blur' },
+    ],
+    dishType: [{
+        type: 'array', required: true, message: 'Please select at least one activity type', trigger: 'change',
+    },
     ],
 })
 const token = ref("Bearer " + localStorage.getItem('userId') as string)
@@ -142,16 +232,37 @@ onMounted(() => {
         router.push('/admin/login')
     }
     getList()
+    DishType()
 })
 const resetForm = () => {
     ruleFormRef.value?.resetFields()
+    ruleForm.des = ''
+}
+const resetEditForm = () => {
+    editRuleFormRef.value?.resetFields()
 }
 const getList = async () => {
     let res = await getDishList()
     if (res.status === 200) {
         tableData.value = res.data.data.records
+        tableData.value.forEach((item: any) => {
+            item.dishTypeName = [...item.dishType].map((item: any) => {
+                return item.name
+            }).join(' / ')
+        })
     }
-
+}
+const selectHandler = async (value: string) => {
+    if (value) {
+        let arr = tableData.value.filter((item: any) => {
+            return item.dishTypeName.includes(value)
+        })
+        tableData.value = arr
+    }
+}
+const DishType = async () => {
+    let res = await getDishType()
+    dishTypeList.value = res.data.data.records
 }
 // 删除菜品
 const handleDelete = (id: number) => {
@@ -182,13 +293,44 @@ const handleDelete = (id: number) => {
 }
 // 添加菜品
 const confirmAddDish = async () => {
-    let res = await addDish(ruleForm)
+    let arr = ruleForm
+    arr.dishType = [...arr.dishType].join(',')
+    let res = await addDish(arr)
+    console.log(res);
+
     if (res.status == 200) {
         ElMessage.success('添加成功')
         getList()
         centerDialogVisible.value = false
     }
 
+}
+// 确认修改按钮
+const confirmEditDish = async () => {
+    const arr = editRuleForm.value
+    arr.dishType = [...arr.dishType].join(',')
+    let res = await editDish(arr)
+    if (res.status == 200) {
+        ElMessage.success('修改成功')
+        editDialogVisible.value = false
+        getList()
+    }
+
+}
+const editBtn = (row: RuleForm) => {
+    editDialogVisible.value = true
+    let obj = [...row.dishType]
+    obj = obj.map((item: any) => {
+        return item.priority
+    })
+    editRuleForm.value = {
+        id: row.id,
+        name: row.name,
+        price: row.price,
+        des: row.des,
+        image: row.image,
+        dishType: obj
+    }
 }
 </script>
 <style scoped lang='less'>
