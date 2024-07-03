@@ -1,6 +1,4 @@
 import axios from 'axios'
-import { useRouter } from "vue-router"
-const router = useRouter()
 const request = axios.create({
     baseURL: '/api',
     timeout: 5000,
@@ -12,10 +10,15 @@ request.interceptors.request.use(
             config.headers['Authorization'] = 'Bearer ' + token
         }
         return config
+    } 
+)
+request.interceptors.response.use(
+    response => {
+        return response.data
     },
     error => {
         if (error.response && error.response.status === 401) {
-            router.push('/login')
+            window.location.href = '/login'
         } else {
             return Promise.reject(error);
         }
