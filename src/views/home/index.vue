@@ -15,7 +15,7 @@
             </el-header>
             <el-container>
                 <el-aside width="200px" class="h-[calc(100vh-60px)] bg-slate-800">
-                    <el-menu :default-openeds="['1-1']" active-text-color="#ffd04b" background-color="#545c64"
+                    <el-menu default-active="1-4-0" :default-openeds="['1-1']" active-text-color="#ffd04b" background-color="#545c64"
                         class="el-menu-vertical-demo" text-color="#fff">
                         <el-sub-menu index="1-1">
                             <template #title>
@@ -23,6 +23,12 @@
                                     <ForkSpoon class="text-slate-100 mt-1" />
                                 </el-icon>
                                 订单管理</template>
+                            <el-menu-item index="1-4-0" @click="router.push('/echarts')">
+                                <el-icon>
+                                    <IceCreamRound class="text-slate-100" />
+                                </el-icon>
+                                数据报表
+                            </el-menu-item>
                             <el-menu-item index="1-4-1" @click="router.push('/dish')">
                                 <el-icon>
                                     <IceCreamRound class="text-slate-100" />

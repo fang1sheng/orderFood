@@ -59,7 +59,8 @@
                     <el-input v-model="ruleForm.des" type="textarea" />
                 </el-form-item>
                 <el-form-item label="样品" label-width="50">
-                    <el-upload :disabled="isFull" :limit="1" :on-exceed="handleExceed" :on-success="handleAvatarSuccess"
+                    <el-upload ref="addUpload" :on-change="addHandleChange" :disabled="isFull" :limit="1"
+                        :on-exceed="handleExceed" :file-list="fileList" :on-success="handleAvatarSuccess"
                         :headers="{ Authorization: token }" action="/api/upload" list-type="picture-card">
                         <el-icon>
                             <Plus />
@@ -107,7 +108,8 @@
                     <el-input v-model="editRuleForm.des" type="textarea" />
                 </el-form-item>
                 <el-form-item label="样品" label-width="50">
-                    <el-upload :disabled="isFull" :limit="1" :on-exceed="handleExceed"
+                    <el-upload ref="editUpload" :on-change="editHandleChange" :file-list="[{ url: editRuleFormImage }]"
+                        :disabled="isFull" :limit="1" :on-exceed="editHandleExceed"
                         :on-success="editHandleAvatarSuccess" :headers="{ Authorization: token }" action="/api/upload"
                         list-type="picture-card">
                         <el-icon>
@@ -139,8 +141,8 @@
 <script setup lang='ts'>
 import { ArrowRight, Plus, ZoomIn } from '@element-plus/icons-vue'
 import { ref, onMounted, reactive } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormInstance, FormRules, UploadProps, UploadFile } from 'element-plus'
+import { ElMessage, ElMessageBox, genFileId } from 'element-plus'
+import type { FormInstance, FormRules, UploadProps, UploadFile, UploadInstance, UploadRawFile } from 'element-plus'
 import { getDishList, addDish, delDish, getDishType, editDish } from '../../api/request'
 import { useRouter } from 'vue-router'
 const router = useRouter()
@@ -176,27 +178,53 @@ const dialogVisible = ref(false)
 const isFull = ref(false)
 const statusSelect = ref<string>('')
 const dialogImageUrl = ref('')
+const addUpload = ref<UploadInstance>()
+const editUpload = ref<UploadInstance>()
+const fileList = ref<UploadFile[]>([])
+const editFileList = ref<UploadFile[]>([])
+const editRuleFormImage = ref<string>("")
 const dishTypeList = ref<OrderType[]>([])
 const multipleSelection = ref<DishType[]>([])
 const handleSelectionChange = (val: DishType[]) => {
     multipleSelection.value = val
 }
 const editRuleForm = ref({} as RuleForm)
-const handleAvatarSuccess: UploadProps['onSuccess'] = (response) => {
+// 添加菜单文件上传成功
+const handleAvatarSuccess: UploadProps['onSuccess'] = (response, file) => {
     if (response.status === 200) {
-        ElMessage.success('上传成功')
+        // ElMessage.success('上传成功')
         ruleForm.image = response.data
     }
+    fileList.value.push(file)
 }
-const editHandleAvatarSuccess: UploadProps['onSuccess'] = (response) => {
+// 修改菜单文件上传成功
+const editHandleAvatarSuccess: UploadProps['onSuccess'] = (response, file) => {
     if (response.status === 200) {
         ElMessage.success('上传成功')
         editRuleForm.value.image = response.data
     }
+    editFileList.value.push(file)
 }
 const handleExceed: UploadProps['onExceed'] = (files) => {
-    ElMessage.warning(`当前限制选择 1 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + multipleSelection.value.length} 个文件`)
-    isFull.value = true
+    addUpload.value!.clearFiles()
+    const file = files[0] as UploadRawFile
+    file.uid = genFileId()
+    addUpload.value!.handleStart(file)
+}
+// 修改菜单文件上传超过数量时
+const editHandleExceed: UploadProps['onExceed'] = (files) => {
+    editUpload.value!.clearFiles()
+    const file = files[0] as UploadRawFile
+    file.uid = genFileId()
+    editUpload.value!.handleStart(file)
+}
+// 修改菜单文件发生变化
+const editHandleChange: UploadProps['onChange'] = () => {
+    editUpload.value!.submit()
+}
+// 添加菜单文件发生变化
+const addHandleChange: UploadProps['onChange'] = () => {
+    addUpload.value!.submit()
 }
 const handlePictureCardPreview = (file: UploadFile) => {
     dialogImageUrl.value = file.url!
@@ -234,13 +262,18 @@ onMounted(() => {
     getList()
     DishType()
 })
+// 重置添加菜单数据
 const resetForm = () => {
     ruleFormRef.value?.resetFields()
     ruleForm.des = ''
+    fileList.value = []
 }
+// 重置修改菜单数据
 const resetEditForm = () => {
     editRuleFormRef.value?.resetFields()
+    editFileList.value = []
 }
+// 获取列表数据
 const getList = async () => {
     let res = await getDishList()
     if (res.status === 200) {
@@ -252,6 +285,7 @@ const getList = async () => {
         })
     }
 }
+// 筛选菜单
 const selectHandler = async (value: string) => {
     if (value) {
         let arr = tableData.value.filter((item: any) => {
@@ -260,6 +294,7 @@ const selectHandler = async (value: string) => {
         tableData.value = arr
     }
 }
+// 获取菜品类型
 const DishType = async () => {
     let res = await getDishType()
     dishTypeList.value = res.data.data.records
@@ -296,8 +331,6 @@ const confirmAddDish = async () => {
     let arr = ruleForm
     arr.dishType = [...arr.dishType].join(',')
     let res = await addDish(arr)
-    console.log(res);
-
     if (res.status == 200) {
         ElMessage.success('添加成功')
         getList()
@@ -317,7 +350,9 @@ const confirmEditDish = async () => {
     }
 
 }
+// 编辑按钮
 const editBtn = (row: RuleForm) => {
+    editRuleFormImage.value = "https://food.281718.xyz/img/" + row.image
     editDialogVisible.value = true
     let obj = [...row.dishType]
     obj = obj.map((item: any) => {
@@ -340,5 +375,8 @@ const editBtn = (row: RuleForm) => {
 
 :deep(.el-upload-list--picture-card) {
     --el-upload-list-picture-card-size: 100px
+}
+:deep(.el-checkbox.is-bordered) {
+    margin-bottom: 8px;
 }
 </style>

@@ -11,8 +11,12 @@ const routes: Array<RouteRecordRaw> = [
     {
         path: '/home',
         component: () => import('../views/home/index.vue'),
-        redirect: '/dish',
+        redirect: '/echarts',
         children: [
+            {
+                path: '/echarts',
+                component: () => import('../views/home/echarts.vue')
+            },
             {
                 path: '/order',
                 component: () => import('../views/home/order.vue')
