@@ -52,7 +52,7 @@
                 <el-form-item label="类型" prop="dishType">
                     <el-checkbox-group v-model="ruleForm.dishType">
                         <el-checkbox border v-for="item in dishTypeList " :key="item.id" :label="item.name"
-                            :value="item.priority" />
+                            :value="item.id" />
                     </el-checkbox-group>
                 </el-form-item>
                 <el-form-item label="描述" prop="price">
@@ -101,7 +101,7 @@
                 <el-form-item label="类型" prop="dishType">
                     <el-checkbox-group v-model="editRuleForm.dishType">
                         <el-checkbox border v-for="item in dishTypeList " :key="item.id" :label="item.name"
-                            :value="item.priority" />
+                            :value="item.id" />
                     </el-checkbox-group>
                 </el-form-item>
                 <el-form-item label="描述" prop="price">
